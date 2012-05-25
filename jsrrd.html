@@ -1,0 +1,137 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--
+ Display poller.pl rrd data for Radio Thermostat via javascriptRRD.
+ Copyright (c) 2012 Michael Greb, michael@thegrebs.com
+
+
+ Based on example code provided with javascriptRRD
+ Copyright (c) 2010 Frank Wuerthwein, fkw@ucsd.edu
+                    Igor Sfiligoi, isfiligoi@ucsd.edu
+
+ Original repository: http://javascriptrrd.sourceforge.net/
+
+ MIT License [http://www.opensource.org/licenses/mit-license.php]
+
+-->
+
+<html>
+
+    <script type="text/javascript" src="lib/binaryXHR.js"></script>
+    <script type="text/javascript" src="lib/rrdFile.js"></script>
+
+    <!-- rrdFlot class needs the following four include files !-->
+    <script type="text/javascript" src="lib/rrdFlotSupport.js"></script>
+    <script type="text/javascript" src="lib/rrdFlot.js"></script>
+    <script type="text/javascript" src="flot/jquery.js"></script>
+    <script type="text/javascript" src="flot/jquery.flot.js"></script>
+    <script type="text/javascript" src="flot/jquery.flot.selection.js"></script>
+    <script type="text/javascript" src="flot/jquery.flot.tooltip.js"></script>
+    <head>
+        <title>mikegrb's thermostat</title>
+    </head>
+
+    <body>
+    <a href="index.html">Back</a>
+    <div id="mygraph"></div>
+
+    <script type="text/javascript">
+    rrd_data = undefined;
+
+    try {
+        FetchBinaryURLAsync("temperature.rrd", rrd_handler);
+    } catch (err) {
+        alert("Failed loading rrd\n" + err);
+    }
+
+    function rrd_handler(bf) {
+        var i_rrd_data = undefined;
+        try {
+            var i_rrd_data = new RRDFile(bf);
+        } catch (err) {
+            alert("File is not a valid RRD archive!");
+        }
+        if (i_rrd_data != undefined) {
+            rrd_data = i_rrd_data;
+            render_graph()
+        }
+    }
+
+    function render_graph() {
+        var f = new rrdFlot("mygraph", rrd_data, {
+
+            // graph_options
+            legend: { noColumns: 6 },
+            yaxes:  [ {}, { show: false, min: 0.1, max: 0.15 } ]
+
+        }, {
+
+            // ds_graph_options
+            'exteriorTemp': {
+                label: 'Outside',
+                color: "#000000"
+            },
+            'interiorTemp': {
+                label: 'Inside',
+                color: "#00ff00"
+            },
+            'coolPoint': {
+                label: 'AC Setpoint',
+                color: "#0000ff"
+            },
+            'heatPoint': {
+                label: 'Heat Setpoint',
+                color: "#ff0000"
+            },
+            'heatUsage': {
+                label: 'Heater On',
+                color: "#ffcccc",
+                yaxis: 2,
+                lines: { fill: true }
+            },
+            'coolUsage': {
+                label: 'AC On',
+                color: "#ccccff",
+                yaxis: 2,
+                lines: { fill: true }
+            },
+
+        }, {
+
+            // rrdflot_defaults
+            num_cb_rows: 9,
+            use_element_buttons: true,
+            multi_ds: false,
+            multi_rra: true,
+            use_rra: true,
+            rra: 0,
+            use_checked_DSs: true,
+            checked_DSs: ["exteriorTemp", "interiorTemp", "coolPoint", "heatPoint", "heatUsage", "coolUsage"],
+            use_windows: true,
+            window_min: 1241752800000,
+            window_max: 1241974500000,
+            graph_width: "700px",
+            graph_height: "300px",
+            scale_width: "350px",
+            scale_height: "200px",
+            timezone: "-4"
+
+        });
+
+        $("#mygraph_time_sel").val("-4");
+        f.callback_timezone_changed();
+        f.scale.clearSelection();
+    }
+
+    // This is the callback function that,
+    // given a binary file object,
+    // verifies that it is a valid RRD archive
+    // and performs the update of the Web page
+
+    // this function is invoked when the RRD file name changes
+    function fname_update() {
+    }
+
+
+    </script>
+    </body>
+</html>
